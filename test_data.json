@@ -1,0 +1,15 @@
+{
+	"zoom_speed" : 0.001,
+	"min_scale" : 100,
+	"point_scale" : 0.01,
+	"point_image_threshold" : 25,
+	"initial_scale" : 100,
+	"points": [
+		{ "color" : "#ff0000", "file" : "000.jpg", "coords" : [0.24, -0.62] },
+		{ "color" : "#ddcc00", "file" : "3683.webp", "coords" : [0.55, 1.02] },
+		{ "color" : "#ff00cc", "file" : "car-967387_1280.png", "coords" : [-0.215, -0.02] },
+		{ "color" : "#00ff00", "file" : "s-l1600.jpg", "coords" : [-0.16, 1.489] },
+		{ "color" : "#ff0dd0", "file" : "Verschiedene_Sushi_Varianten.jpg", "coords" : [0.0, 0.36] },
+		{ "color" : "#ff0ccc", "file" : "Leaning-Tower-of-Pisa-Italy.webp", "coords" : [-1.2, 0.809] }
+	]
+}
