@@ -43,13 +43,14 @@ function movePoint(idx, x_pos, y_pos)
 function showPointImage(idx)
 {
 	var p = document.getElementById("point-" + idx);
-	if (parseInt(p.style.left) < -pointsize) {return;}
-	if (parseInt(p.style.left) > parseInt(window.innerWidth)) {return;}
-	if (parseInt(p.style.top) < -pointsize) {return;}
-	if (parseInt(p.style.top) > parseInt(window.innerHeight)) {return;}
+	if (parseInt(p.style.left) < -pointsize) {return false;}
+	if (parseInt(p.style.left) > parseInt(window.innerWidth)) {return false;}
+	if (parseInt(p.style.top) < -pointsize) {return false;}
+	if (parseInt(p.style.top) > parseInt(window.innerHeight)) {return false;}
 	
 	var im = document.getElementById("point-img-" + idx);
 	im.removeAttribute("hidden")
+	return true;
 }
 
 function hidePointImage(idx)
@@ -63,25 +64,37 @@ function scalePoint(idx)
 	var p = document.getElementById("point-" + idx);
 	var im = document.getElementById("point-img-" + idx);
 	
-	if (pointsize > point_image_threshold) 
-	{showPointImage(idx)}
-	else
-	{hidePointImage(idx)}
-	
 	p.style.width = pointsize + "px";
 	p.style.height = pointsize + "px";
-	im.style.maxWidth = pointsize + "px";
-	im.style.maxHeight = pointsize + "px";
+	
+	if (pointsize > point_image_threshold) 
+	{
+		if (!showPointImage(idx)) {return;}
+		if(im.naturalWidth > im.naturalHeight)
+		{
+			im.style.width = pointsize + "px";
+			im.style.height = "auto"
+		}
+		else
+		{
+			im.style.height = pointsize + "px";
+			im.style.width = "auto"
+		}
+	}
+	else
+	{
+		hidePointImage(idx)
+	}
 }
 
 function draw() 
 {
 	pointsize = (scale - min_scale + 1) * point_scale;
+	new_coords = math.multiply(coords, math.transpose(view))
 	for(i=0; i<coords.length; i++)
 	{
-		p = math.multiply(view, coords[i]);
 		scalePoint(i);
-		movePoint(i, p.get([0]), p.get([1]));
+		movePoint(i, new_coords.get([i, 0]), new_coords.get([i, 1]));
 	}
 }
 
