@@ -12,6 +12,24 @@ coords = [
 	{% endfor %}
 ];
 
+transformed_coords = math.zeros(3, coords.length)
+
+colors = [
+	{% for point in points %}
+		"{{point.color}}",
+	{% endfor %}
+]
+
+image_cache = [
+	{% for point in points %}
+		{ 
+			"url": "{{url_for('static', filename=point.file)}}",
+			"obj": null,
+			"loaded": false
+		},
+	{% endfor %}
+]
+
 // initialize internal variables (all velues are overwritten at startup)
 scale = initial_scale;
 trans = [0, 0];
@@ -32,69 +50,71 @@ function updateView()
 						[    0,     0,       1]])
 }
 
-function movePoint(idx, x_pos, y_pos) 
+function drawPoint(idx)
 {
-	var d = document.getElementById("point-" + idx);
-	d.style.position = "absolute";
-	d.style.left = x_pos-(pointsize*0.5)+'px';
-	d.style.top = y_pos-(pointsize*0.5)+'px';
-}
-
-function showPointImage(idx)
-{
-	var p = document.getElementById("point-" + idx);
-	if (parseInt(p.style.left) < -pointsize) {return false;}
-	if (parseInt(p.style.left) > parseInt(window.innerWidth)) {return false;}
-	if (parseInt(p.style.top) < -pointsize) {return false;}
-	if (parseInt(p.style.top) > parseInt(window.innerHeight)) {return false;}
+	var x_pos = transformed_coords.get([idx, 0])
+	var y_pos = transformed_coords.get([idx, 1])
 	
-	var im = document.getElementById("point-img-" + idx);
-	im.removeAttribute("hidden")
-	return true;
-}
-
-function hidePointImage(idx)
-{
-	var im = document.getElementById("point-img-" + idx);
-	im.setAttribute("hidden", "hidden")
-}
-
-function scalePoint(idx)
-{
-	var p = document.getElementById("point-" + idx);
-	var im = document.getElementById("point-img-" + idx);
+	if (x_pos < -pointsize) {return;}
+	if (x_pos > parseInt(window.innerWidth)+(pointsize*0.5)) {return;}
+	if (y_pos < -pointsize) {return;}
+	if (y_pos > parseInt(window.innerHeight)+(pointsize*0.5)) {return;}
 	
-	p.style.width = pointsize + "px";
-	p.style.height = pointsize + "px";
+	var rect_left = x_pos-(pointsize*0.5);
+	var rect_top = y_pos-(pointsize*0.5);
+	var rect_width = Math.max(pointsize,1);
+	var rect_height = Math.max(pointsize,1);
+	
+	var c = document.getElementById("point-canvas");
+	var ctx = c.getContext("2d");
+	ctx.fillStyle = colors[idx];
+	ctx.fillRect(rect_left, rect_top, rect_width, rect_height);
 	
 	if (pointsize > point_image_threshold) 
 	{
-		if (!showPointImage(idx)) {return;}
-		if(im.naturalWidth > im.naturalHeight)
+		var im_c = image_cache[idx];
+		if (im_c.loaded)
 		{
-			im.style.width = pointsize + "px";
-			im.style.height = "auto"
+			im = im_c["obj"]
+			im_ratio = im.naturalWidth / im.naturalHeight;
+			if(im_ratio > 1.0) // landscape
+			{
+				im_height = rect_height/im_ratio
+				ctx.drawImage(im,rect_left,rect_top+(rect_height-im_height)*0.5, rect_width, im_height);
+			}
+			else // portrait
+			{
+				im_width = rect_width*im_ratio
+				ctx.drawImage(im,rect_left + (rect_width-im_width)*0.5,rect_top, im_width, rect_height);
+			}
 		}
 		else
 		{
-			im.style.height = pointsize + "px";
-			im.style.width = "auto"
+			im_c["obj"] = new Image();
+			im_c["obj"]["idx"] = idx;
+			im_c["obj"].onload = function () {
+				image_cache[this["idx"]].loaded = true;
+				drawPoint(this["idx"])
+			}
+			im_c["obj"].src = image_cache[idx]["url"];
 		}
-	}
-	else
-	{
-		hidePointImage(idx)
 	}
 }
 
 function draw() 
 {
+	var c = document.getElementById("point-canvas");
+	var dimension = [parseInt(window.innerWidth), parseInt(window.innerHeight)];
+	c.width = dimension[0];
+	c.height = dimension[1];
+	var ctx = c.getContext("2d");
+	ctx.clearRect(0, 0, c.width, c.height);
+	
 	pointsize = (scale - min_scale + 1) * point_scale;
-	new_coords = math.multiply(coords, math.transpose(view))
+	transformed_coords = math.multiply(coords, math.transpose(view))
 	for(i=0; i<coords.length; i++)
 	{
-		scalePoint(i);
-		movePoint(i, new_coords.get([i, 0]), new_coords.get([i, 1]));
+		drawPoint(i);
 	}
 }
 
