@@ -2,6 +2,7 @@
 zoom_speed = {{zoom_speed}};
 min_scale = {{min_scale}};
 point_scale = {{point_scale}};
+point_thumb_threshold = {{point_thumb_threshold}};
 point_image_threshold = {{point_image_threshold}};
 initial_scale = {{initial_scale}}
 
@@ -23,9 +24,16 @@ colors = [
 image_cache = [
 	{% for point in points %}
 		{ 
-			"url": "{{url_for('static', filename=point.file)}}",
-			"obj": null,
-			"loaded": false
+			"image": {
+				"url": "{{url_for('static', filename=point.file)}}",
+				"obj": null,
+				"loaded": false
+			},
+			"thumb": {
+				"url": "{{url_for('static', filename=point.thumb)}}",
+				"obj": null,
+				"loaded": false
+			}
 		},
 	{% endfor %}
 ]
@@ -70,9 +78,18 @@ function drawPoint(idx)
 	ctx.fillStyle = colors[idx];
 	ctx.fillRect(rect_left, rect_top, rect_width, rect_height);
 	
-	if (pointsize > point_image_threshold) 
+	if (pointsize > point_thumb_threshold) 
 	{
-		var im_c = image_cache[idx];
+		var im_c;
+		if (pointsize > point_image_threshold)
+		{
+			im_c = image_cache[idx]["image"];
+		}
+		else
+		{
+			im_c = image_cache[idx]["thumb"];
+		}
+		
 		if (im_c.loaded)
 		{
 			im = im_c["obj"]
@@ -92,11 +109,12 @@ function drawPoint(idx)
 		{
 			im_c["obj"] = new Image();
 			im_c["obj"]["idx"] = idx;
+			im_c["obj"]["im_c"] = im_c;
 			im_c["obj"].onload = function () {
-				image_cache[this["idx"]].loaded = true;
+				this["im_c"].loaded = true;
 				drawPoint(this["idx"])
 			}
-			im_c["obj"].src = image_cache[idx]["url"];
+			im_c["obj"].src = im_c["url"];
 		}
 	}
 }
