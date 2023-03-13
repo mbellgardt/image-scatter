@@ -45,6 +45,7 @@ view = math.identity(3);
 pointsize = 1
 dragging = false;
 last_p = [0, 0]
+focused_point = -1
 
 function initView()
 {
@@ -136,6 +137,13 @@ function draw()
 	}
 }
 
+function onPoint(x, y, idx)
+{
+	var x_pos = transformed_coords.get([idx, 0])
+	var y_pos = transformed_coords.get([idx, 1])
+	return (Math.abs(x - x_pos) < pointsize * 0.5) && (Math.abs(y - y_pos) < pointsize * 0.5)
+}
+
 function onMouseDown(event)
 {
 	last_p = [event.pageX, event.pageY];
@@ -158,6 +166,21 @@ function onMouseMove(event)
 		updateView();
 		draw();
 	}
+	if (focused_point >= 0 && onPoint(event.pageX, event.pageY, focused_point))
+	{
+		drawPoint(focused_point);
+		return;
+	}
+	for(i=coords.length-1; i>=0; i--)
+	{
+		if(onPoint(event.pageX, event.pageY, i))
+		{
+			focused_point=i;
+			drawPoint(i);
+			return;
+		}
+	}
+	focused_point = -1;
 }
 
 function onMouseWheel(event)
@@ -171,6 +194,7 @@ function onMouseWheel(event)
 	trans = math.add(p, d);
 	updateView();
 	draw();
+	drawPoint(focused_point);
 }
 
 // initialization on startup
